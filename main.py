@@ -1,7 +1,9 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+import plotly.express as px
 
+SIG_DIGIT = 1 # number of digits after the decimal point
 
 def MPO_clogp(clogp: float) -> float:
     if clogp <= 3.0:
@@ -36,7 +38,7 @@ def MPO_hbd(hbd:int ) -> float:
     if hbd == 0:
         return 1.0
     if hbd >= 3.5:
-        return 0.5
+        return 0.0
     return (3.5 - hbd )/3.0
 
 
@@ -47,39 +49,39 @@ def MPO_tpsa(tpsa: float) -> float:
         return (tpsa -20)/20.0
     if tpsa > 90 and tpsa < 120:
         return (tpsa -90)/30.0
-    return 1.0 
+    return 1.0
+st.markdown("#### Central nervous system multiparameter optimization (CNS MPO) calculator")
+st.sidebar.markdown("#### define physchem properties")
+st.markdown('##### :green[CNS MPO contributions]')
 
-#add_selectbox = st.sidebar.selectbox(
-pka = st.sidebar.number_input('pKa',min_value=0,max_value=14, value = 2),  # 👈 this is a widget
-mw = st.sidebar.number_input('MolMass',min_value=0,max_value=1500, value = 300, step=10) 
+pka = st.sidebar.number_input('pKa',min_value=0,max_value=14, value = 2, label_visibility="visible")
+mw = st.sidebar.number_input('MolMass',min_value=0,max_value=1500, value = 300, step=10)
 hbd = st.sidebar.number_input('hbd',min_value=0,max_value=20, value = 2)
 clogp = st.sidebar.number_input('clogP',min_value=0,max_value=7, value = 2)
 clogd = st.sidebar.number_input('clogD',min_value=0,max_value=7, value = 2)
-tpsa = st.sidebar.number_input("TPSA", 0, 300, value=50, step=10) #st.sidebar.slider('TPSA',min_value=0,max_value=300, value = 50)
-#) # 👈 this is a widget
+tpsa = st.sidebar.number_input("TPSA", 0, 300, value=50, step=10)
 
-#st.write('CNS MPO contribution for pKa is', MPO_pka(pka[0]))
-#st.write('CNS MPO contribution for MolMass is', MPO_mw(mw))
-#st.write('CNS MPO contribution for hbd', MPO_hbd(hbd))
-#st.write('CNS MPO contribution for clogP', MPO_clogp(clogp))
-#st.write('CNS MPO contribution for clogD', MPO_clogd(clogd))
-#st.write('CNS MPO contribution for TPSA', MPO_tpsa(tpsa))
-
-pka = MPO_pka(pka[0]) 
+pka = MPO_pka(pka)
 mw = MPO_mw(mw) 
 hbd = MPO_hbd(hbd) 
 clogp = MPO_clogp(clogp)
 clogd = MPO_clogd(clogd)
 tpsa = MPO_tpsa(tpsa)
-data = {'pKa' : [pka], 'MW': [mw], 'HBD': [hbd], 'clogP': [clogp], 'clogD': [clogd], 'TPSA': [tpsa]}
-chart_data = pd.DataFrame(data)
-#st.bar_chart(source, x="variety", y="yield", color="site", horizontal=True)
-pd.options.plotting.backend = "plotly"
-fig = chart_data.transpose().plot.bar()
-fig.update_layout(yaxis_title=None)
-fig.update_layout(xaxis_title=None) 
+
+#setting up the dataframe
+chart_data = pd.DataFrame(dict(
+    group = ['pKa', 'MW', 'HBD', 'clogP', 'clogD', 'TPSA'],
+    value = [pka, mw, hbd, clogp, clogd, tpsa]))
+chart_data = chart_data.round(SIG_DIGIT)
+
+fig = px.bar(chart_data, x= "group", y = "value", color="group", text_auto=True)
+fig.update_traces(textfont_size=14, textangle=0, textposition = "outside")
+fig.update_layout(yaxis_title="contribution")
+fig.update_layout(xaxis_title="property")
 fig.update_layout(showlegend=False)
-
-st.plotly_chart(fig)#, horizontal=False)
-
-st.text("CNS MPO =" + str(chart_data.sum(axis=1)[0]))
+st.plotly_chart(fig)
+# the total of all MPO contributions
+st.markdown("##### :green[the sum of contributions = ] " + str(chart_data.sum(axis=0).value))
+st.markdown("""####
+for more detail on CNS MPO see e.g. *ACS Chem. Neurosci.* **2016**, *7*, 767−775
+""")
