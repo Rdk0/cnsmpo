@@ -1,124 +1,94 @@
 package main
 
 import (
-	//"encoding/json"
 	"fmt"
+	"reflect"
 )
 
 type values struct {
-  clogp float32
-  clogd float32
-  mw float32
-  pka float32
-  tpsa float32
-  hbd float32
+	Clogp float64
+	Clogd float64
+	Mw    float64
+	Pka   float64
+	Tpsa  float64
+	Hbd   float64
 }
 
-const (
-  clogpMax float32 = 5.0 
-  clogpMin float32 = 3.0
-  clogdMax float32 = 4.0
-  clogdMin float32 =  2.0 
-  mwMax    float32 =  500.0  
-  mwMin    float32 =  360.0
-  pkaMax   float32 = 10.0
-  pkaMin   float32 = 8.0
-  tpsaMax1 float32 = 40.0
-  tpsaMax2 float32 = 90.0
-  tpsaMin1 float32 = 20.0  
-  tpsaMin2 float32 = 120 
-  tpsMin   float32 = 40.0
-  hbdMin   float32 = 0.0  
-  hbdMax   float32 = 4.0
-)
-
-
-func stepFunctionOneSlope(prop string,  vals values) float32{
-//all properties with a simple step function with linear slope
-var break1 float32
-var break2 float32
-var val float32
-var retVal float32
-
-switch prop:=prop; prop  {
-  case "clogp":  {
-    break1 = clogpMax
-    break2 = clogpMin 
-    val    =  vals.clogp
-    }
-  case "clogd":  {
-    break1 = clogdMax
-    break2 = clogdMin  
-    val    =  vals.clogd
-    }
-  case "mw":  {
-    break1 = mwMax
-    break2 = mwMin  
-    val    =  vals.mw 
-  }
-  case "hbd":  {
-    break1 = hbdMin
-    break2 = hbdMax  
-    val    =  vals.hbd 
-    }
-  default:  {
-    return 0.0
-    }
-  }
-
-  if val < break1 {
-    retVal =  1.0
-  } else if val > break2 {
-    retVal = 0.0
-  } else {
-  retVal = (break2 - val)/(break2-break1)
-  }
-  fmt.Printf("contribution from %v is %0.2f\n", prop, retVal)
-  return retVal
+func MPO_Clogp(Clogp float64) float64 {
+	if Clogp <= 3.0 {
+		return 1.0
+	} else if Clogp >= 5.0 {
+		return 0.0
+	} else {
+		return (5.0 - Clogp) / 2.0
+	}
 }
 
-func stepFunctionTwoSlpes(val0 values) float32 {
-// case for TPSA with trapezoid step function
-//  tpsaMin1 float32 = 20.0 left most
-// tpsaMax1 float32 = 40.0 second from the left
-//  tpsaMax2 float32 = 90.0 third
-//  tpsaMin2 float32 = 120 last
-// the vertices are described by tpsaMin1 - tpsaMax1 - tpsaMax2 - tpsaMin2
-val := val0.tpsa
-var retVal float32
-  if (val <  tpsaMin1  || val >  tpsaMin2){
-    retVal = 0.0}
-  if (val >  tpsaMin1  && val <  tpsaMax1){
-    retVal = (val - tpsaMin1)/(tpsaMax1-tpsaMin1)}
-  if (val >= tpsaMax1  && val <= tpsaMax2){
-    retVal =  1.0}
-  if (val >  tpsaMax2  && val <  tpsaMin2) {
-    retVal = (val - tpsaMin2)/(tpsaMax2-tpsaMin2)
-  }
-  fmt.Printf("contribution from TPSA is %0.2f\n", retVal)
-  return retVal
+func MPO_Clogd(Clogd float64) float64 {
+	if Clogd <= 2.0 {
+		return 1.0
+	} else if Clogd >= 4.0 {
+		return 0.0
+	} else {
+		return (Clogd - 2.0) / 2.0
+	}
 }
 
-
-func calcMpo(vals values) float32{
-  var mpoScore float32 = 0.0
-  arr := [5]string{"clogp", "clogd", "mw",  "pka", "hbd"} 
-  for _, prop := range arr { 
-    mpoScore +=  stepFunctionOneSlope(prop, vals)  
-    } 
-  mpoScore += stepFunctionTwoSlpes(vals)
-  return mpoScore
+func MPO_Mw(Mw float64) float64 {
+	if Mw <= 360.0 {
+		return 1.0
+	} else if Mw >= 500.0 {
+		return 0.0
+	} else {
+		return (500.0 - Mw) / (500.0 - 360.0)
+	}
 }
 
-func main(){
-vals := values{
-  clogp: 2.5,
-  clogd: 2.4, 
-  mw: 300, 
-  pka: 2.1,
-  tpsa: 120,
-  hbd: 2.0,
+func MPO_Pka(Pka float64) float64 {
+	if Pka <= 8.0 {
+		return 1.0
+	} else if Pka >= 10.0 {
+		return 0.0
+	} else {
+		return (10 - Pka) / 2.0
+	}
 }
-//byteArr, _ := json.Marshal(vals)
-fmt.Printf("calculated MPO for %+v is %.2f\n", vals, calcMpo(vals))
+
+func MPO_Hbd(Hbd float64) float64 {
+	if Hbd == 0 {
+		return 1.0
+	} else if Hbd >= 3.5 {
+		return 0.0
+	} else {
+		return (3.5 - Hbd) / 3.0
+	}
+}
+
+func MPO_Tpsa(Tpsa float64) float64 {
+	if Tpsa <= 20 || Tpsa >= 120 {
+		return 0.0
+	} else if Tpsa > 20 && Tpsa < 40 {
+		return (Tpsa - 20.0) / 20.0
+	} else if Tpsa > 90.0 && Tpsa < 120.0 {
+		return (Tpsa - 90.0) / 30.0
+	} else {
+		return 1.0
+	}
+}
+
+func calcMpo(vals values) float64 {
+	return MPO_Clogp(vals.Clogp) + MPO_Clogd(vals.Clogd) + MPO_Mw(vals.Mw) + MPO_Pka(vals.Pka) + MPO_Hbd(vals.Hbd)
+}
+
+func main() {
+	var vals values
+	var number float64
+
+	for _, prop := range [6]string{"Clogp", "Clogd", "Mw", "Pka", "Tpsa", "Hbd"} {
+		fmt.Println("input " + prop)
+		fmt.Scanf("%d", &number)
+		reflect.ValueOf(&vals).Elem().FieldByName(prop).SetFloat(number)
+
+	}
+	fmt.Printf("calculated MPO for %+v is %.2f\n", vals, calcMpo(vals))
 }
