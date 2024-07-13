@@ -79,7 +79,7 @@ func calcMpo(vals values) float64 {
 	return MPO_Clogp(vals.Clogp) + MPO_Clogd(vals.Clogd) + MPO_Mw(vals.Mw) + MPO_Pka(vals.Pka) + MPO_Tpsa(vals.Tpsa)+ MPO_Hbd(vals.Hbd)
 }
 
-func individualContributions(vals values) {
+func contributions(vals values) {
 	fmt.Printf("clogP|  %.1f\nclogD|  %.1f\nmw   |  %.1f\npKa  |  %.1f\ntpsa |  %.1f\nhbd  |  %.1f\n",
 	MPO_Clogp(vals.Clogp), MPO_Clogd(vals.Clogd), MPO_Mw(vals.Mw), MPO_Pka(vals.Pka), MPO_Tpsa(vals.Tpsa), MPO_Hbd(vals.Hbd))
 }
@@ -101,13 +101,12 @@ func main() {
 			tpsa,
 			hbd,
 		}
-		fmt.Println("\n\n******************************************************")
-		fmt.Print("\n\n")
+		fmt.Println("\n******************************************************")
 		fmt.Printf("calculated MPO for %+v is %.1f\n\n", vals, calcMpo(vals))
-		fmt.Println("individual contributions for each property is")
+		fmt.Println("individual contributions for each property are")
 		fmt.Println("-----------")
-		individualContributions(vals)
-		fmt.Println("\n\n******************************************************")
+		contributions(vals)
+		fmt.Println("\n******************************************************")
 		fmt.Println("press Ctrl-C to exit the program")
 	}
 }
