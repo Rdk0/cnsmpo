@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"reflect"
 )
 
 type values struct {
@@ -77,18 +76,38 @@ func MPO_Tpsa(Tpsa float64) float64 {
 }
 
 func calcMpo(vals values) float64 {
-	return MPO_Clogp(vals.Clogp) + MPO_Clogd(vals.Clogd) + MPO_Mw(vals.Mw) + MPO_Pka(vals.Pka) + MPO_Hbd(vals.Hbd)
+	return MPO_Clogp(vals.Clogp) + MPO_Clogd(vals.Clogd) + MPO_Mw(vals.Mw) + MPO_Pka(vals.Pka) + MPO_Tpsa(vals.Tpsa)+ MPO_Hbd(vals.Hbd)
+}
+
+func individualContributions(vals values) {
+	fmt.Printf("clogP|  %.1f\nclogD|  %.1f\nmw   |  %.1f\npKa  |  %.1f\ntpsa |  %.1f\nhbd  |  %.1f\n",
+	MPO_Clogp(vals.Clogp), MPO_Clogd(vals.Clogd), MPO_Mw(vals.Mw), MPO_Pka(vals.Pka), MPO_Tpsa(vals.Tpsa), MPO_Hbd(vals.Hbd))
 }
 
 func main() {
-	var vals values
-	var number float64
-
-	for _, prop := range [6]string{"Clogp", "Clogd", "Mw", "Pka", "Tpsa", "Hbd"} {
-		fmt.Println("input " + prop)
-		fmt.Scanf("%d", &number)
-		reflect.ValueOf(&vals).Elem().FieldByName(prop).SetFloat(number)
-
+	var clogp, clogd, mw, pka, tpsa, hbd float64
+	
+    for {
+		fmt.Println("input values separated by space for clogp, clogd, mw, pka, tpsa, hbd")
+		_, err := fmt.Scanf("%f %f %f %f %f %f", &clogp, &clogd, &mw, &pka, &tpsa, &hbd)
+		if err != nil {
+			fmt.Printf("an error occuried %v: ", err)
+		}
+		vals := values{
+			clogp, 
+			clogd,
+			mw,
+			pka,
+			tpsa,
+			hbd,
+		}
+		fmt.Println("\n\n******************************************************")
+		fmt.Print("\n\n")
+		fmt.Printf("calculated MPO for %+v is %.1f\n\n", vals, calcMpo(vals))
+		fmt.Println("individual contributions for each property is")
+		fmt.Println("-----------")
+		individualContributions(vals)
+		fmt.Println("\n\n******************************************************")
+		fmt.Println("press Ctrl-C to exit the program")
 	}
-	fmt.Printf("calculated MPO for %+v is %.2f\n", vals, calcMpo(vals))
 }
